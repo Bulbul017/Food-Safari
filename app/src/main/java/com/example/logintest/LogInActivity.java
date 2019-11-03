@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,7 +21,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class LogInActivity extends AppCompatActivity {
 
-    EditText emailID,password;
+    EditText emailID,password,password_confm;
     Button btnSignIn;
     TextView tvSignUp;
     FirebaseAuth mFirebaseAuth;
@@ -34,6 +36,7 @@ public class LogInActivity extends AppCompatActivity {
         mFirebaseAuth = FirebaseAuth.getInstance();
         emailID = findViewById(R.id.editText2);
         password = findViewById(R.id.editText);
+        password_confm = findViewById(R.id.editText3);
         btnSignIn = findViewById(R.id.button);
         tvSignUp = findViewById(R.id.textView);
 
@@ -63,7 +66,9 @@ public class LogInActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 String email = emailID.getText().toString();
-                String pwd = password.getText().toString();
+                final String pwd = password.getText().toString();
+                String pwd_con = password_confm.getText().toString();
+
                 if(email.isEmpty()){
 
                     emailID.setError("Please enter your email ID");
@@ -82,20 +87,41 @@ public class LogInActivity extends AppCompatActivity {
                 }
                 else if(!(email.isEmpty() && pwd.isEmpty())){
 
-                    mFirebaseAuth.signInWithEmailAndPassword(email,pwd).addOnCompleteListener(LogInActivity.this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
+                    if(pwd.matches(pwd_con) && (Patterns.EMAIL_ADDRESS.matcher(email).matches())){
 
-                            if(!task.isSuccessful()){
+                        mFirebaseAuth.signInWithEmailAndPassword(email,pwd).addOnCompleteListener(LogInActivity.this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
 
-                                Toast.makeText(LogInActivity.this,"Login failed, please try again",Toast.LENGTH_SHORT).show();
+                                if(!task.isSuccessful()){
 
-                            }else{
+                                    Toast.makeText(LogInActivity.this,"Login failed, please try again",Toast.LENGTH_SHORT).show();
 
-                                startActivity(new Intent(LogInActivity.this,HomeActivity.class));
+                                }else{
+
+                                    Constant.res_owner_pass = pwd;
+
+                                    Log.i("#constant_got",pwd);
+
+                                    startActivity(new Intent(LogInActivity.this,Res_owner_dashboard.class));
+                                }
                             }
-                        }
-                    });
+                        });
+
+                    }
+                    if(!pwd.matches(pwd_con)){
+
+                        password_confm.setError("Password doesn't match");
+                        password_confm.requestFocus();
+
+                    }
+                    if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+
+                        emailID.setError("Please enter a valid email ID");
+                        emailID.requestFocus();
+
+                    }
+
                 }
                 else{
 
